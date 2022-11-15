@@ -4,5 +4,6 @@ from . import views
 
 urlpatterns = [
     path('', views.index, name='index'),
-    path('requests', views.requests, name='requests'),
+    path('requests', views.requestsf, name='requests'),
+    path('trigger/<int:id>', views.trigger, name='trigger'),
 ]
