@@ -1,0 +1,4 @@
+.vscode/
+__pycache__/
+smartmanage/__pycache__/
+smartweb/__pycache__/

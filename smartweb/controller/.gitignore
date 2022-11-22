@@ -1,0 +1,5 @@
+.vscode/
+__pycache__/
+Lights/__pycache__/
+Network/__pycache__/
+util/__pycache__/

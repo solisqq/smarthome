@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div style="text-align: center;margin-top:20%;">
+        <div id="NoCon" style="font-size: 32px; color: red;" hidden="hidden">No connection</div>
+        <a name="Trigger1" style="font-size:48px;color: blue;" class="trigger1" id="co">
+            Trigger1
+        </a>
+    </div>
+
+    <script src="{% static 'js/jquery.min.js' %}"></script>
+    <script>
+    // AJAX CALL
+    $('.trigger1').click(function(){
+        connectionDiv = $('#NoCon')
+        $.ajax({
+                    type: "POST",
+                    url: "/trigger/1",
+                    data: JSON.stringify({'trigger': "1", 'room':'office','csrfmiddlewaretoken': '{{ csrf_token }}'}),
+                    dataType: "json",
+                    success: function(data) {
+                        console.log(data);
+                        if(data["status"]=="ok"){
+                            connectionDiv.hide(1000);
+                        } else {
+                            connectionDiv.show(1000);
+                        }
+                    }
+                });
+    
+    })
+    </script>
+</body>
+</html>

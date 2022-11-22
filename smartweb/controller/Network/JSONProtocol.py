@@ -54,15 +54,17 @@ Response trom controller:
 """
 
 import json
-import sys
-from typing import Any, Callable
+import time
+from typing import Callable
 from PyQt6 import QtCore
 import socket
+import config
 
 class JSONPacket:
     RESPONSE = "response" 
     REGISTER = "register"
     TRIGGER = "trigger"
+    PING = "ping"
     __MSG_ID = 0
 
     def __init__(self, srcName : str, destName : str, msgType : str, value : str, responseTo : str = None):
@@ -78,16 +80,19 @@ class JSONPacket:
         JSONPacket.__MSG_ID+=1
         return JSONPacket.__MSG_ID
 
-    def response(value : str, response : "JSONPacket"):
-        return JSONPacket(response.destName, response.srcName, JSONPacket.response, value, response.msgId)
+    def response(value : str, response : "JSONPacket") -> "JSONPacket":
+        return JSONPacket(response.destName, response.srcName, JSONPacket.RESPONSE, value, response.msgId)
 
-    def register(port : int, srcName : str, destName : str):
+    def register(port : int, srcName : str, destName : str) -> "JSONPacket":
         return JSONPacket(srcName, destName, JSONPacket.REGISTER, str(port))
 
-    def trigger(value : str, srcName : str, destName : str):
+    def ping(srcName : str, destName : str) -> "JSONPacket":
+        return JSONPacket(srcName, destName, JSONPacket.PING, "ping")
+
+    def trigger(value : str, srcName : str, destName : str) -> "JSONPacket":
         return JSONPacket(srcName, destName, JSONPacket.TRIGGER, value)
 
-    def isResponseTo(self, potentialSender : "JSONPacket"):
+    def isResponseTo(self, potentialSender : "JSONPacket") -> bool:
         if potentialSender.msgId == self.responseTo and self.srcName == potentialSender.destName: return True
         return False
 
@@ -118,11 +123,16 @@ class JSONPacket:
             }}
 
 class JSONTalker(QtCore.QThread):
-    def __init__(self, host, port):
+    
+    packetAvailable = QtCore.pyqtSignal(JSONPacket)
+    def __init__(self, addr : tuple, handler : Callable = None):
+        #super().__init__(self, None)
+        #config.Debuggable.__init__(self, "Server")
         QtCore.QThread.__init__(self)
         self.daemon = True
-        self.host = host
-        self.port = port
+        self.host = addr[0]
+        self.port = addr[1]
+        self.__handler : Callable = handler
         self.start()
     
     @QtCore.pyqtSlot()
@@ -132,24 +142,33 @@ class JSONTalker(QtCore.QThread):
             s.bind((self.host, self.port))
             s.listen()
             while True: # Accept connections from multiple clients
-                print('Listening for client...')
+                #self.debug('Listening for client...')
                 conn, addr = s.accept()
-                print('Connection address:', addr)
+                #self.debug('Connection address:', addr)
                 text = ''
+                startTime = time.time()
                 while True:
                     char = conn.recv(1).decode()
-                    if char == '\n': break
-                    else: text += char
-                print("Received:", text)
+                    if char == '\n':
+                        #self.debug("Received:", text)
+                        self.packetAvailable.emit(JSONPacket.fromJsonString(text))
+                        if self.__handler is not None: self.__handler(JSONPacket.fromJsonString(text))
+                        break
+                    else:
+                        text += char
+                    if startTime+2<time.time(): break
+                conn.close()
 
-    def send(host : str, port : str, packet : JSONPacket):
-        toSend = packet.toJSONString()
-        toSend+='\n'
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect((host, port))
-            s.sendall(toSend.encode())
+    def send(address : tuple, packet : JSONPacket)->bool:
+        try:
+            toSend = packet.toJSONString()
+            toSend+='\n'
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.settimeout(config.Server.SOCKET_TIMEOUT)
+                s.connect(address)
+                s.sendall(toSend.encode())
+            return True
+        except: return False
 
-#app = QtCore.QCoreApplication(sys.argv)
-#talker = JSONTalker("127.0.0.1", 8192)
-#while(True): pass
-#app.exec()
+    def sendToController(packet : JSONPacket)->bool:
+        return JSONTalker.send(config.Controller.ADDR, packet)

@@ -1,7 +1,7 @@
 import yeelight
 from PyQt6 import QtWidgets
 from PyQt6 import QtGui, QtCore
-from device import Device
+from controller.device import Device
 
 
 class LightBulb(Device):
@@ -76,7 +76,7 @@ class YeelightLBRGB(LightBulbRGB):
 
     def __reconnect(self):
         self.bulb._socket.close()
-        self.bulb = yeelight.Bulb(self.devInfo.ip)
+        self.bulb = yeelight.Bulb(self.info.ip)
 
     @QtCore.pyqtSlot()
     def on(self): self.bulb.turn_on()
@@ -90,9 +90,8 @@ class YeelightLBRGB(LightBulbRGB):
                 if properties['power'] == 'on': self._switchWidget.setChecked(True)
                 else: self._switchWidget.setChecked(False)
                 self._brightnessWidget.setValue(int(properties['bright']))
-                self._nameEdit.setText(properties['name'])
             except:
-                print("failed")
+                self.debug("Failed to change brightness")
 
     def scan() -> list[Device.Info]:
         return YeelightLBRGB.__parseScan(
