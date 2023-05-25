@@ -1,5 +1,8 @@
 from typing import Optional
 from PyQt6 import QtWidgets, QtCore
+from controller.Custom.Presets import PresetsController
+from controller.Lights.lightbulbs import LightBulb
+from controller.Network.database import Database
 from controller.util import threadutils
 from controller.Network.JSONProtocol import JSONPacket
 from controller.device import Device
@@ -10,10 +13,10 @@ class DevicesWidget(QtWidgets.QWidget):
     newDeviceSelected2 = QtCore.pyqtSignal(object)
     newDeviceAvailable = QtCore.pyqtSignal(Device)
     
-    def __init__(self, parent : QtWidgets.QWidget = None):
+    def __init__(self, presetsController : PresetsController, parent : QtWidgets.QWidget = None):
         super().__init__(parent)
         self.setLayout(QtWidgets.QVBoxLayout())
-
+        self.presetsController = presetsController
         self.tableWidget = QtWidgets.QTableWidget()
         self.tableWidget.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows)
         self.tableWidget.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.SingleSelection)
@@ -38,8 +41,7 @@ class DevicesWidget(QtWidgets.QWidget):
         self._devices : list[Device] = []
 
     def __showDevDialog(self, device : Device):
-        self.deviceDialog = DeviceDialog(device)
-        self.deviceDialog.show()
+        device.show()
 
     @QtCore.pyqtSlot(JSONPacket)
     def handlePacket(self, packet : JSONPacket):
@@ -82,19 +84,34 @@ class DevicesWidget(QtWidgets.QWidget):
                     device.reasureConnection()
                     isRegistered = True
             if not isRegistered:
-                self.append(devInfo.instantiate())
+                self.append(devInfo.instantiate(self.presetsController))
 
-    def handleNamesUpdate(self, knownDevices):
+    def handlePresetUpdate(self, presetName : str):
+        for dev in self._devices:
+            dev.handlePattern(presetName)
+
+    @QtCore.pyqtSlot(int)
+    def handleLightsBrightnessChange(self, value : int): 
+        for dev in self._devices:
+            if(isinstance(dev, LightBulb)):
+                dev.dimBy(value)
+
+    def handleNamesUpdate(self, knownDevices : list[Database.Models.KnownDevices]):
         for dev in self._devices:
             for kdev in knownDevices:
-                if dev.info.id == knownDevices.uid and dev.getName() != knownDevices.name:
-                    dev.setName(knownDevices.name)
+                if dev.info.id == kdev.uid:
+                    if dev.getName() != kdev.name:
+                        dev.setName(kdev.name)
 
 
-class DeviceDialog(QtWidgets.QDialog):
-    def __init__(self, device : Device, parent : QtWidgets.QWidget = None):
-        super().__init__(parent)
-        self.setLayout(QtWidgets.QVBoxLayout())
-        self.infoWidget = QtWidgets.QLabel(device.info.devType.__name__+"   "+device.info.id)
-        self.layout().addWidget(self.infoWidget)
-        self.layout().addWidget(device)
+
+# class DeviceDialog(QtWidgets.QDialog):
+#     def __init__(self, device : Device, parent : QtWidgets.QWidget = None):
+#         super().__init__(parent)
+#         self.setLayout(QtWidgets.QVBoxLayout())
+#         self.infoWidget = QtWidgets.QLabel(device.info.devType.__name__+"   "+device.info.id)
+#         self.layout().addWidget(self.infoWidget)
+#         self.layout().addWidget(device)
+    
+#     def __del__(self):
+#         self.close()

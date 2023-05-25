@@ -1,4 +1,7 @@
 .vscode/
 __pycache__/
 venv/
+zigbee2mqtt/
 desktop.ini
+Lights.lnk
+readme.txt

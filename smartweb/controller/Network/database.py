@@ -3,7 +3,7 @@ from PyQt6 import QtCore
 import config
 
 class Database(QtCore.QObject):
-
+    INSTANCE : "Database" = None
     # class BasicOps:                
     #     def getAll(tableName : str, connection : sqlite3.Connection) -> list:
     #         cur = connection.cursor()
@@ -17,6 +17,17 @@ class Database(QtCore.QObject):
             cur = connection.cursor()
             cur.execute("SELECT * from smartmanage_"+tableName)
             return cur.fetchall()
+        
+        def add(tableName : str, connection : sqlite3.Connection, toAdd : dict):
+            cur = connection.cursor()
+            columnNames = " ("+str.join(",", toAdd.keys())+")"
+            values = " VALUES("
+            for value in toAdd.values():
+                values+= "'"+value+"',"
+            values = values[:-1]
+            values+=")"
+            cur.execute("INSERT INTO smartmanage_"+tableName+columnNames+values+";")
+            connection.commit()
 
         #def add(tableName : str, connection : sqlite3.Connection):
 
@@ -44,13 +55,15 @@ class Database(QtCore.QObject):
                 Database.Models.KnownDevices.items = toRet
                 return Database.Models.KnownDevices.items
 
+            def add(dataToAdd : dict): pass
+
         class Patterns(Model):
             items : list["Database.Models.Patterns"] = []
 
-            def __init__(self, name : str, data : str, deviceType : str):
+            def __init__(self, name : str, data : str, devName : str):
                 self.name : str = name
                 self.data : str = data
-                self.deviceType : str = deviceType
+                self.devName : str = devName
 
             def getAll(connection : sqlite3.Connection) -> list["Database.Models.Patterns"]:
                 data = Database.BasicOps.getAll("patterns", connection)
@@ -60,9 +73,13 @@ class Database(QtCore.QObject):
                 Database.Models.Patterns.items = toRet
                 return Database.Models.Patterns.items
 
+            def add(connection : sqlite3.Connection, dataToAdd : dict):
+                Database.BasicOps.add("patterns", connection, dataToAdd)
+
     def __init__(self, dbfile : str):
         QtCore.QObject.__init__(self)
         config.Debuggable.__init__(self, "Database:")
+        Database.INSTANCE = self
         self.dbfilePath = dbfile
         self.__connection : sqlite3.Connection = None
         self.debug = config.Debuggable("Database")
@@ -78,6 +95,9 @@ class Database(QtCore.QObject):
 
     def getPatterns(self) -> list["Database.Models.Patterns"]:
         return Database.Models.Patterns.getAll(self.__connection)
+
+    def addPattern(self, data : dict):
+        return Database.Models.Patterns.add(self.__connection, data)
 
     def __update(self):
         self.debug(self.getKnownDevices())
