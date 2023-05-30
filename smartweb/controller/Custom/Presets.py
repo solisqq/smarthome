@@ -2,6 +2,8 @@ from enum import Enum
 from typing import Optional
 from PyQt6 import QtWidgets, QtCore
 
+from controller.Network.database import Database
+
 class PresetsController(QtWidgets.QComboBox):
     
     class Commands(Enum):
@@ -19,11 +21,8 @@ class PresetsController(QtWidgets.QComboBox):
     def __init__(self, parent = None):
         super().__init__(parent)
         self.currentIndexChanged.connect(
-            lambda x: self.presetActivate.emit(
-                str(self.currentData())))
-    
-    def addPreset(self, presetName, presetCmd):
-        self.addItem(presetName, presetCmd)
+            lambda x: self.presetActivate.emit(self.currentText()))
+        self.__updatePatterns()
 
     def getPresetNames(self) -> list[str]:
         return [self.itemText(i) for i in range(self.count())]
@@ -33,10 +32,10 @@ class PresetsController(QtWidgets.QComboBox):
         match command:
             case PresetsController.Commands.NEXT_PRESET:
                 self.setCurrentIndex(
-                    (self.currentIndex() - 1 - int(self.itemText((self.currentIndex() - 1) % self.count())=="off")) % self.count())
+                    (self.currentIndex() - 1 - int(self.itemText((self.currentIndex() - 1) % self.count())=="office.off")) % self.count())
             case PresetsController.Commands.PREV_PRESET:
                 self.setCurrentIndex(
-                    (self.currentIndex() + 1 + int(self.itemText((self.currentIndex() + 1) % self.count())=="off")) % self.count())
+                    (self.currentIndex() + 1 + int(self.itemText((self.currentIndex() + 1) % self.count())=="office.off")) % self.count())
             case PresetsController.Commands.TURN_ON:
                 self.__turnOn()
             case PresetsController.Commands.TURN_OFF:
@@ -49,17 +48,23 @@ class PresetsController(QtWidgets.QComboBox):
                     self.changeBrightnessRequested.emit(-additionalValue)
             case PresetsController.Commands.TOGGLE:
                 self.__toggle()
-    
+
     def __turnOff(self):
-        index = self.findText("off")
+        index = self.findText("office.off")
         if(index<0): return
         self.setCurrentIndex(index)
+
+    def __updatePatterns(self):
+        patterns : list[Database.Models.Patterns] = Database.INSTANCE.getPatterns()
+        for pattern in patterns:
+            if self.findText(pattern.name) < 0:
+                self.addItem(pattern.name)
 
     def __turnOn(self):
         self.setCurrentIndex(0)
 
     def __toggle(self):
-        if self.currentText()!="off":
+        if self.currentText()!="office.off":
             self.__turnOff()
         else:
             self.__turnOn()

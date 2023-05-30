@@ -1,3 +1,4 @@
+import json
 from typing import Optional
 from PyQt6 import QtWidgets, QtCore
 from controller.Custom.Presets import PresetsController
@@ -73,10 +74,19 @@ class DevicesWidget(QtWidgets.QWidget):
         self.scanThread = threadutils.Threading(Device.scan)
         self.scanThread.dataReady.connect(self.__handleScanResult)
 
+    def addCurrentPresetToDB(self, presetName : str):
+        for device in self._devices:
+            devName = device.getName()
+            data = device.serializeState()
+            if devName == "" or len(data.keys())==0: continue
+            Database.INSTANCE.addPattern({"name": presetName, "data": json.dumps(data), "devName": devName})
+
     def __handleScanResult(self, scanResult : list[Device.Info]):
         self.scanThread = None
         self.rescanBtn.setEnabled(True)
         self.scanTimer.start()
+        
+        # Iterate over scan results, and instantiate new devices
         for devInfo in scanResult:
             isRegistered=False
             for device in self._devices:
@@ -85,6 +95,21 @@ class DevicesWidget(QtWidgets.QWidget):
                     isRegistered = True
             if not isRegistered:
                 self.append(devInfo.instantiate(self.presetsController))
+
+        # Disconnect not available devices:
+        availableIds = [info.id for info in scanResult]
+        for dev in self._devices:
+            if dev.info.id not in availableIds:
+                self.__removeRowByCellText(dev.info.id)
+        self._devices = [dev for dev in self._devices if device.info.id in availableIds]
+
+    def __removeRowByCellText(self, text):
+        for row in range(self.tableWidget.rowCount()):
+            item = self.tableWidget.item(row, 3)
+            if item and item.text() == text:
+                self.tableWidget.removeRow(row)
+                return True
+        return False
 
     def handlePresetUpdate(self, presetName : str):
         for dev in self._devices:
@@ -102,16 +127,3 @@ class DevicesWidget(QtWidgets.QWidget):
                 if dev.info.id == kdev.uid:
                     if dev.getName() != kdev.name:
                         dev.setName(kdev.name)
-
-
-
-# class DeviceDialog(QtWidgets.QDialog):
-#     def __init__(self, device : Device, parent : QtWidgets.QWidget = None):
-#         super().__init__(parent)
-#         self.setLayout(QtWidgets.QVBoxLayout())
-#         self.infoWidget = QtWidgets.QLabel(device.info.devType.__name__+"   "+device.info.id)
-#         self.layout().addWidget(self.infoWidget)
-#         self.layout().addWidget(device)
-    
-#     def __del__(self):
-#         self.close()

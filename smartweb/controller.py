@@ -15,13 +15,9 @@ from controller.Custom.Presets import PresetsController
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, parent : QtWidgets.QWidget = None):
         super().__init__(parent)
+        self.database = Database(config.Database.PATH)
         self.validClose = False
         self.commands = PresetsController()
-        self.commands.addPreset("working", "office.working")
-        self.commands.addPreset("minimal", "office.minimal")
-        self.commands.addPreset("warsztat", "office.warsztat")
-        #self.commands.addPreset("full", "office.full")
-        self.commands.addPreset("off", "office.off")
         self.mainIcon = QtGui.QIcon("controller/misc/icon.ico")
         self.setWindowIcon(self.mainIcon)
         self.__createTrayIcon()
@@ -30,9 +26,7 @@ class MainWindow(QtWidgets.QMainWindow):
         ZigGate.zbConnection = ZigGate.ZigBeeGateConnection()
         self.setCentralWidget(QtWidgets.QWidget())
         self.centralWidget().setLayout(QtWidgets.QVBoxLayout())
-
-        self.database = Database(config.Database.PATH)
-
+        
         self.__updateTimer = QtCore.QTimer()
         self.__updateTimer.timeout.connect(self.__selfCheckDevicesForChanges)
         self.__updateTimer.start(config.Database.UPDATE_TIME_MS)
@@ -75,7 +69,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     @QtCore.pyqtSlot()
     def handleTray(self):
-        self.devicesWidget.handlePresetUpdate("office."+self.sender().text())
+        self.devicesWidget.handlePresetUpdate(self.sender().text())
 
     def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
         if not self.trayIcon.isVisible():

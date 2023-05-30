@@ -54,6 +54,8 @@ class LightBulb(Device):
         self._switchWidget.blockSignals(False)
         self._on()
 
+    def isOn(self) -> bool: return self._switchWidget.isChecked()
+
     @QtCore.pyqtSlot()
     def off(self):
         self._switchWidget.blockSignals(True)
@@ -64,7 +66,7 @@ class LightBulb(Device):
     def setCt(self, ct):
         self._ctWidget.blockSignals(True)
         self._ctWidget.setValue(ct)
-        self._ctWidget.blockSignals(True)
+        self._ctWidget.blockSignals(False)
         self._setCt(ct)
     
     @QtCore.pyqtSlot(int)
@@ -89,6 +91,7 @@ class LightBulbRGB(LightBulb):
             "state": str(int(self._switchWidget.isChecked())),
             "color": self._colorPicker.currentColor().name(),
             "bright": str(self._brightnessWidget.value()),
+            "ct": str(self._ctWidget.value())
             }
     
     def deserializeState(self, name : str, data : dict):
@@ -102,6 +105,7 @@ class LightBulbRGB(LightBulb):
         self._colorPicker.blockSignals(True)
         self._colorPicker.setCurrentColor(color)
         self._colorPicker.blockSignals(False)
+        self._setColor(color)
 
     def _setColor(self, color : QtGui.QColor): raise NotImplementedError()
 
@@ -111,7 +115,7 @@ class YeelightLB(LightBulbRGB):
         self.bulb = yeelight.Bulb(dev_inf.ip)
         self.__reconnect()
         self.hasNightMode = False
-        self.__fetchToBulb(self.bulb.get_properties, self.__parseInfo)
+        self._fetchThread(self.bulb.get_properties, self.__parseInfo)
 
     def __parseInfo(self, data : dict):
         self.debugDev(str(data))
@@ -144,21 +148,11 @@ class YeelightLB(LightBulbRGB):
 
     @QtCore.pyqtSlot()
     def _on(self):
-        self.__fetchToBulb(self.bulb.turn_on, None)
+        self._fetchThread(self.bulb.turn_on, None)
 
     @QtCore.pyqtSlot()
     def _off(self):
-        self.__fetchToBulb(self.bulb.turn_off, None)
-
-    def isOn(self) -> bool: return self._switchWidget.isChecked()
-
-    def serializeState(self) -> dict: 
-        return {
-            "state": str(int(self._switchWidget.isChecked())),
-            "color": self._colorPicker.currentColor().name(),
-            "bright": str(self._brightnessWidget.value()),
-            "ct": str(self._ctWidget.value())
-            }
+        self._fetchThread(self.bulb.turn_off, None)
     
     def deserializeState(self, name : str, data : dict):
         self.debugDev(str(name)+ " "+str(data))
@@ -169,8 +163,8 @@ class YeelightLB(LightBulbRGB):
         bright = int(data["bright"])
         color = QtGui.QColor.fromString(data["color"])
         r,g,b = (color.red(), color.green(), color.blue())
-        if ct!=2999: self.__fetchToBulb(self.bulb.set_scene, None, yeelight.SceneClass.CT, ct, bright)
-        else: self.__fetchToBulb(self.bulb.set_scene, None, yeelight.SceneClass.COLOR, r, g, b, bright)
+        if ct!=2999: self._fetchThread(self.bulb.set_scene, None, yeelight.SceneClass.CT, ct, bright)
+        else: self._fetchThread(self.bulb.set_scene, None, yeelight.SceneClass.COLOR, r, g, b, bright)
 
     def scan() -> list[Device.Info]:
         try:
@@ -188,14 +182,6 @@ class YeelightLB(LightBulbRGB):
                 bulb['capabilities']['id'],
                 int(bulb['port'])))
         return toRet
-    
-    def __fetchToBulb(self, action : Callable, handler : Callable = None, *args):
-        def someAction(*arguments):
-            try:
-                return action(*arguments)
-            except:
-                self.__reconnect()
-        self._safeThreadAction(someAction, handler, *args)
         
     @QtCore.pyqtSlot(QtGui.QColor)
     def _setColor(self, color : QtGui.QColor):
@@ -211,12 +197,20 @@ class YeelightLB(LightBulbRGB):
     def _setBrightness(self, brightnessValue):
         try:
             if self.hasNightMode:
-                self.__fetchToBulb(self.bulb.set_night_mode, None, brightnessValue<10, brightnessValue)
-            self.__fetchToBulb(self.bulb.set_brightness, None, brightnessValue)
+                self._fetchThread(self.bulb.set_night_mode, None, brightnessValue<10, brightnessValue)
+            self._fetchThread(self.bulb.set_brightness, None, brightnessValue)
         except: pass
 
     @QtCore.pyqtSlot(int)
     def _setCt(self, ct):
         try:
-            self.__fetchToBulb(self.bulb.set_color_temp, None, ct)
+            self._fetchThread(self.bulb.set_color_temp, None, ct)
         except: pass
+
+    def _fetchThread(self, action : Callable, handler : Callable = None, *args):
+        def someAction(*arguments):
+            try:
+                return action(*arguments)
+            except:
+                self.__reconnect()
+        self._safeThreadAction(someAction, handler, *args)

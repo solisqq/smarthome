@@ -1,0 +1,59 @@
+{
+    "result": [
+        {
+            "active_time": 1684795171,
+            "biz_type": 0,
+            "category": "dd",
+            "create_time": 1684795171,
+            "icon": "smart/icon/ay1549957801673HFxI9/f069ed58f1588a48e494a9506e18b4b2.png",
+            "id": "bf6131c77e2eb7a362nsxg",
+            "ip": "5.60.4.75",
+            "lat": "51.1746",
+            "local_key": "^hH%!]j'kYVikgXz",
+            "lon": "22.2949",
+            "model": "",
+            "name": "LedStrip",
+            "online": true,
+            "owner_id": "156654688",
+            "product_id": "6vudtgbr2dicmuma",
+            "product_name": "\u706f\u5e26\u4e09\u8def(RGB)_Wi-Fi & Bluetooth LE",
+            "status": [
+                {
+                    "code": "switch_led",
+                    "value": true
+                },
+                {
+                    "code": "work_mode",
+                    "value": "colour"
+                },
+                {
+                    "code": "colour_data",
+                    "value": "{\"h\":198,\"s\":756,\"v\":97}"
+                },
+                {
+                    "code": "scene_data",
+                    "value": "{\"scene_num\":1,\"scene_units\":[{\"bright\":0,\"h\":46,\"s\":1000,\"temperature\":0,\"unit_change_mode\":\"static\",\"unit_gradient_duration\":13,\"unit_switch_duration\":14,\"v\":716}]}"
+                },
+                {
+                    "code": "countdown",
+                    "value": 0
+                }
+            ],
+            "sub": false,
+            "time_zone": "+02:00",
+            "uid": "eu1684794604713bv6ux",
+            "update_time": 1684878808,
+            "uuid": "fcc6034ef06eb168"
+        }
+    ],
+    "success": true,
+    "t": 1685040800594,
+    "tid": "6af7b4b9fb2d11eda795ce4cada2c678",
+    "file": {
+        "name": "tuya-raw.json",
+        "description": "Full raw list of Tuya devices.",
+        "account": "hu9u7q9avqmdvvtewdy9",
+        "date": "2023-05-25T20:53:20.501873",
+        "tinytuya": "1.12.7"
+    }
+}

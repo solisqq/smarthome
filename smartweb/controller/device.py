@@ -29,7 +29,6 @@ class PatternsWidget(QtWidgets.QWidget):
             lambda: self.addPatternSignal.emit(
                 presetNameLineEdit.text()))
         self._comboBox = QtWidgets.QComboBox()
-        self._comboBox.addItem("---")
         self._comboBox.currentTextChanged.connect(
             lambda text:
                 self.enablePattern.emit(
@@ -43,8 +42,10 @@ class PatternsWidget(QtWidgets.QWidget):
             self._comboBox.setCurrentText(name)
 
     def addPattern(self, data : dict):
+        self._comboBox.blockSignals(True)
         self.__patterns.update({data["name"]: data})
         self._comboBox.addItem(data["name"])
+        self._comboBox.blockSignals(False)
 
 
 class BatteryWidget(QtWidgets.QWidget):
@@ -159,6 +160,13 @@ class Device(QtWidgets.QDialog):
     def __connectionFailed(self):
         self._connected = False
         self.disconnected.emit(self)
+
+    def _fetchThread(self, action : Callable, handler : Callable = None, *args):
+        def someAction(*arguments):
+            try:
+                return action(*arguments)
+            except: pass 
+        self._safeThreadAction(someAction, handler, *args)
 
     @QtCore.pyqtSlot(str)
     def savePattern(self, name : str):
