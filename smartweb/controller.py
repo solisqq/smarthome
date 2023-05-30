@@ -9,7 +9,7 @@ from controller.device import Device
 from controller.devicesWidget import DevicesWidget
 from controller.Network.database import Database
 from controller.Gate import ZigGate
-from PyQt6 import QtWidgets, QtCore, QtGui
+from PyQt5 import QtWidgets, QtCore, QtGui
 from controller.Custom.Presets import PresetsController
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -51,14 +51,14 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def __createTrayIcon(self):
         self.trayIconMenu = QtWidgets.QMenu(self)
-        self.actions : list[QtGui.QAction] = []
+        self.actions : list[QtWidgets.QAction] = []
         
         for cmd in self.commands.getPresetNames():
-            self.actions.append(QtGui.QAction())
+            self.actions.append(QtWidgets.QAction())
             action = self.actions[-1]
             action.setText(cmd)
             action.triggered.connect(self.handleTray)
-        self.actions.append(QtGui.QAction("close"))
+        self.actions.append(QtWidgets.QAction("close"))
         self.actions[-1].triggered.connect(QtCore.QCoreApplication.quit)
         self.trayIconMenu.addActions(self.actions)
         self.trayIcon = QtWidgets.QSystemTrayIcon(self)

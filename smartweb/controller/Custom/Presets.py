@@ -1,6 +1,6 @@
 from enum import Enum
 from typing import Optional
-from PyQt6 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore
 
 from controller.Network.database import Database
 

@@ -1,7 +1,7 @@
 import json
 import re
 from controller.device import Device
-from PyQt6 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore
 import subprocess
 from controller.Custom.Presets import PresetsController
 

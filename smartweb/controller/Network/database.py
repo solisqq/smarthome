@@ -1,5 +1,5 @@
 import sqlite3
-from PyQt6 import QtCore
+from PyQt5 import QtCore
 import config
 
 class Database(QtCore.QObject):

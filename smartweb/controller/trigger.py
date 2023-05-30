@@ -1,5 +1,5 @@
 from typing import Callable
-from PyQt6 import QtCore
+from PyQt5 import QtCore
 
 class Action(QtCore.QObject):
     def __init__(self, handler : Callable, parent : QtCore.QObject = None):

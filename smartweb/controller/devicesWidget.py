@@ -1,6 +1,6 @@
 import json
 from typing import Optional
-from PyQt6 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore
 from controller.Custom.Presets import PresetsController
 from controller.Lights.lightbulbs import LightBulb
 from controller.Network.database import Database

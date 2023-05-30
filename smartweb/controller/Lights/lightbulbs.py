@@ -1,8 +1,8 @@
 import time
 from typing import Callable
 import yeelight
-from PyQt6 import QtWidgets
-from PyQt6 import QtGui, QtCore
+from PyQt5 import QtWidgets
+from PyQt5 import QtGui, QtCore
 from controller.device import Device
 
 
@@ -98,7 +98,7 @@ class LightBulbRGB(LightBulb):
         if data["state"] == "1": self.on()
         else: self.off()
         self.setBrightness(int(data["bright"]))
-        self.setColor(QtGui.QColor.fromString(data["color"]))
+        self.setColor(QtGui.QColor(data["color"]))
 
     @QtCore.pyqtSlot(QtGui.QColor)
     def setColor(self, color : QtGui.QColor):
@@ -161,7 +161,7 @@ class YeelightLB(LightBulbRGB):
             return
         ct = int(data["ct"])
         bright = int(data["bright"])
-        color = QtGui.QColor.fromString(data["color"])
+        color = QtGui.QColor(data["color"])
         r,g,b = (color.red(), color.green(), color.blue())
         if ct!=2999: self._fetchThread(self.bulb.set_scene, None, yeelight.SceneClass.CT, ct, bright)
         else: self._fetchThread(self.bulb.set_scene, None, yeelight.SceneClass.COLOR, r, g, b, bright)

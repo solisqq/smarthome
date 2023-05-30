@@ -1,6 +1,6 @@
 import json
 from typing import Any, Callable
-from PyQt6 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore
 from controller.Custom.Presets import PresetsController
 from controller.Network.JSONProtocol import JSONPacket
 import config

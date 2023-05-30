@@ -8,8 +8,8 @@ import struct
 import tinytuya
 from typing import Callable
 import yeelight
-from PyQt6 import QtWidgets
-from PyQt6 import QtGui, QtCore
+from PyQt5 import QtWidgets
+from PyQt5 import QtGui, QtCore
 from controller.device import Device
 from controller.Lights.lightbulbs import LightBulbRGB
 
@@ -119,7 +119,7 @@ class TuyaStrip(LightBulbRGB):
         state =  True if "1" == data["state"] or 1 == data["state"] else False
         ct = int(data["ct"])
         bright = int(data["bright"])
-        color = QtGui.QColor.fromString(data["color"])
+        color = QtGui.QColor(data["color"])
         if not state:
             self.off()
             return

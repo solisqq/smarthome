@@ -1,6 +1,6 @@
 from controller.device import Device
 from controller.Network.JSONProtocol import JSONPacket
-from PyQt6 import QtCore
+from PyQt5 import QtCore
 import socket
 import config
 
